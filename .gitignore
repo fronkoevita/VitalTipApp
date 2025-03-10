@@ -1,1 +1,13 @@
 /credentials/
+# Virtuálne prostredie
+venv/
+credentials/.env
+
+# Cache
+__pycache__/
+*.pyc
+
+# Rôzne systémové "neporiadky"
+.DS_Store
+Thumbs.db
+
