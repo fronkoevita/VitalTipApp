@@ -1,22 +1,18 @@
 import os
 import json
-from firebase_admin import credentials, messaging, initialize_app
-from dotenv import load_dotenv
+import base64
+from firebase_admin import credentials, initialize_app, messaging
 
-# Load environment variables from .env (locally)
-load_dotenv()
+encoded_creds = os.environ.get("FIREBASE_CREDENTIALS")
+if not encoded_creds:
+    raise ValueError("FIREBASE_CREDENTIALS not set in Heroku Config Vars")
 
-# Get the JSON string from the environment variable
-json_str = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
-if not json_str:
-    raise ValueError("FIREBASE_SERVICE_ACCOUNT is not set or is empty")
+decoded_json = base64.b64decode(encoded_creds).decode("utf-8")
+creds_dict = json.loads(decoded_json)
 
-# Convert the JSON string to a Python dictionary
-creds_dict = json.loads(json_str)
-
-# Initialize Firebase using the dictionary
 cred = credentials.Certificate(creds_dict)
 firebase_app = initialize_app(cred)
+
 
 def send_push_notification(token: str, title: str, body: str):
     """
