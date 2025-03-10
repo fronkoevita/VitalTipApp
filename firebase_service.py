@@ -1,28 +1,34 @@
-import firebase_admin
-from firebase_admin import credentials, messaging
 import os
+import json
+from firebase_admin import credentials, messaging, initialize_app
+from dotenv import load_dotenv
 
-# Načítaj cestu k JSON so service account
-SERVICE_ACCOUNT_PATH = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "credentials/serviceAccountKey.json")
+# Load environment variables from .env (locally)
+load_dotenv()
 
+# Get the JSON string from the environment variable
+json_str = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+if not json_str:
+    raise ValueError("FIREBASE_SERVICE_ACCOUNT is not set or is empty")
 
-# Inicializácia Firebase len raz (singleton pattern)
-cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
-firebase_app = firebase_admin.initialize_app(cred)
+# Convert the JSON string to a Python dictionary
+creds_dict = json.loads(json_str)
+
+# Initialize Firebase using the dictionary
+cred = credentials.Certificate(creds_dict)
+firebase_app = initialize_app(cred)
 
 def send_push_notification(token: str, title: str, body: str):
     """
-    Odošle push notifikáciu cez Firebase Cloud Messaging (v1).
-    :param token: Device token prijímateľa
-    :param title: Nadpis správy
-    :param body: Obsah správy
-    :return: výsledok z Firebase
+    Sends a push notification via Firebase Cloud Messaging (FCM v1).
+
+    :param token: Device token of the recipient
+    :param title: Notification title
+    :param body: Notification body text
+    :return: The response from Firebase
     """
     message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body
-        ),
+        notification=messaging.Notification(title=title, body=body),
         token=token
     )
     response = messaging.send(message, app=firebase_app)
