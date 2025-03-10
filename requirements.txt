@@ -1,0 +1,12 @@
+Flask~=3.1.0
+Flask_SQLAlchemy==2.5.1
+Flask_Migrate==3.1.0
+APScheduler~=3.11.0
+pyfcm~=2.0.8
+gunicorn==20.1.0
+
+
+Flask-Migrate~=4.1.0
+scheduler~=0.8.8
+python-dotenv~=1.0.1
+firebase-admin~=6.6.0
