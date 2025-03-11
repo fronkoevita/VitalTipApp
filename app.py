@@ -1,25 +1,24 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_migrate import Migrate
 from models import db, User, Reminder
 from config import Config
-from scheduler import init_scheduler
 from dotenv import load_dotenv
 load_dotenv()
+from firebase_service import send_push_notification
+from scheduler import init_scheduler
 from datetime import datetime
+import os
 
-
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder=os.path.join(os.getcwd(), "frontend", "build", "static"),
+    template_folder=os.path.join(os.getcwd(), "frontend", "build")
+)
 app.config.from_object(Config)
 
 # Inicializácia databázy a migrácií
 db.init_app(app)
 migrate = Migrate(app, db)
-
-
-@app.route('/')
-def home():
-    return "Vitaj na hlavnej stránke mojej aplikácie!"
-
 
 # Endpoint pre registráciu používateľa
 @app.route('/api/register', methods=['POST'])
@@ -43,7 +42,7 @@ def add_reminder():
     user_id = data.get('user_id')
     title = data.get('title')
     reminder_time_str = data.get('reminder_time')  # očakáva sa formát "HH:MM:SS"
-    time_obj = datetime.strptime(reminder_time_str, "%H:%M:%S").time()
+    time_obj = datetime.strptime(reminder_time_str, "%H:%M").time()
 
     if not all([user_id, title, reminder_time_str]):
         return jsonify({"message": "user_id, title and reminder_time are required"}), 400
@@ -70,7 +69,7 @@ def get_reminders(user_id):
         {
             "id": r.id,
             "title": r.title,
-            "reminder_time": r.reminder_time.strftime("%H:%M:%S"),
+            "reminder_time": r.reminder_time.strftime("%H:%M"),
             "active": r.active
         } for r in user.reminders
     ]
@@ -95,6 +94,15 @@ def update_token():
     db.session.commit()
     return jsonify({"message": "Device token updated"}), 200
 
+# Catch-all route pre obsluhu React aplikácie
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    # Ak existuje súbor v build priečinku, vrátime ho
+    if path != "" and os.path.exists(os.path.join(app.template_folder, path)):
+        return send_from_directory(app.template_folder, path)
+    # Inak vrátime index.html pre React SPA
+    return send_from_directory(app.template_folder, 'index.html')
 
 if __name__ == '__main__':
     # Inicializácia APScheduler pre push notifikácie
