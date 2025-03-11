@@ -7,7 +7,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:5000/api/register', { email });
+      const response = await axios.post('/api/register', { email });
       alert(response.data.message);
       setEmail('');
     } catch (error) {
